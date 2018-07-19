@@ -1,19 +1,10 @@
-import * as yarnParser from "./yarnParser";
-import * as fs from "fs";
-import * as path from "path";
-
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const yarnParser = require("./yarnParser");
+const fs = require("fs");
+const path = require("path");
 const NODE_MODULES_PATH = path.resolve("./node_modules");
-
-export interface YarnDependency {
-    version: string;
-    dependencies?: PackageDependency;
-}
-
-export interface PackageDependency {
-    [index: string]: YarnDependency;
-}
-
-function convertEntryToList(entry: any): string[] {
+function convertEntryToList(entry) {
     if (typeof entry === "string") {
         return [entry];
     } else if (Array.isArray(entry)) {
@@ -28,14 +19,12 @@ function convertEntryToList(entry: any): string[] {
         throw `Incorrect entry type.`;
     }
 }
-
-export function getDependencyFromYarn(entry: any): PackageDependency | null {
+function getDependencyFromYarn(entry) {
     let entryList = convertEntryToList(entry);
     const packageJson = JSON.parse(fs.readFileSync("package.json").toString());
     if (!packageJson.dependencies) {
         return null;
     }
-
     let dependency;
     let content;
     try {
@@ -52,12 +41,11 @@ export function getDependencyFromYarn(entry: any): PackageDependency | null {
             })
             .filter(item => !!item);
     }
-
-    function findDependency(entryList: string[]): PackageDependency {
-        let m: PackageDependency = {};
+    function findDependency(entryList) {
+        let m = {};
         entryList.map(k => {
             const info = dependency[k] || {};
-            let item: YarnDependency = {
+            let item = {
                 version: info.version
             };
             if (info.dependencies) {
@@ -67,22 +55,20 @@ export function getDependencyFromYarn(entry: any): PackageDependency | null {
                     )
                 );
             }
-
             m[k] = item;
         });
         return m;
     }
-
     return findDependency(entryList);
 }
-
-export function getPKGVersion(yarnEntryName: string) {
+exports.getDependencyFromYarn = getDependencyFromYarn;
+function getPKGVersion(yarnEntryName) {
     const atIndex = yarnEntryName.lastIndexOf("@");
     if (atIndex > 0) {
         yarnEntryName = yarnEntryName.substring(0, atIndex);
     }
     const pkgPath = path.join(NODE_MODULES_PATH, yarnEntryName, "package.json");
     const pkg = require(pkgPath);
-
     return pkg.version;
 }
+exports.getPKGVersion = getPKGVersion;

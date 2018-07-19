@@ -1,28 +1,18 @@
-import * as path from "path";
-import * as md5 from "md5";
-import * as fs from "fs-extra";
-import * as webpack from "webpack";
-import * as chalk from "chalk";
-import { CacheController } from "./CacheController";
-import { BundleController } from "./BundleController";
-
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const path = require("path");
+const md5 = require("md5");
+const fs = require("fs-extra");
+const chalk = require("chalk");
+const CacheController_1 = require("./CacheController");
+const BundleController_1 = require("./BundleController");
 // const cacheDir = path.resolve(".dll-link-plugin");
 const MANIFEST_FILE = "manifest.json";
 const pluginName = "DllLinkWebpackPlugin";
-
-export interface DllLinkWebpackPluginOptions {
-    config: webpack.Configuration;
-    manifestNames?: string[];
-    assetsMode?: boolean;
-    htmlMode?: boolean;
-    appendVersion?: boolean;
-}
-
 function md5Slice(msg) {
     return md5(msg).slice(0, 10);
 }
-
-function changeName(name: string, version: string) {
+function changeName(name, version) {
     const tmp = name.split(".");
     const ext = tmp.splice(-1);
     if (ext[0] === "js") {
@@ -31,7 +21,6 @@ function changeName(name: string, version: string) {
         return name;
     }
 }
-
 /**
  * Takes a string in train case and transforms it to camel case
  *
@@ -39,44 +28,32 @@ function changeName(name: string, version: string) {
  *
  * @param {string} word
  */
-function trainCaseToCamelCase(word: string) {
+function trainCaseToCamelCase(word) {
     return word.replace(/-([\w])/g, function(match, p1) {
         return p1.toUpperCase();
     });
 }
-
-export class DllLinkWebpackPlugin {
-    cacheController: CacheController;
-    bundleController: BundleController;
-    hasCompile: boolean;
-    outputPath: string;
-    options: DllLinkWebpackPluginOptions;
-
-    constructor(options: DllLinkWebpackPluginOptions) {
+class DllLinkWebpackPlugin {
+    constructor(options) {
         this.check = this.check.bind(this);
         this.addAssets = this.addAssets.bind(this);
         this.hookIntoHTML = this.hookIntoHTML.bind(this);
         this.updateNames = this.updateNames.bind(this);
-
         this.options = options;
         const { config } = this.options;
         this.outputPath = config.output.path;
-
         const { entry } = config;
-
         const configIndex = config["name"] || md5Slice(JSON.stringify(config));
-
-        this.cacheController = new CacheController({
+        this.cacheController = new CacheController_1.CacheController({
             configIndex,
             entry,
             manifestFile: `${this.outputPath}/${MANIFEST_FILE}`
         });
-        this.bundleController = new BundleController({
+        this.bundleController = new BundleController_1.BundleController({
             webpackConfig: config
         });
         this.hasCompile = false;
     }
-
     hookIntoHTML(compilation) {
         const hookFunction = (htmlPluginData, cb) => {
             const { publicPath } = this.options.config.output;
@@ -93,8 +70,7 @@ export class DllLinkWebpackPlugin {
             if (publicPath) {
                 jsNames = jsNames.map(name => path.join(publicPath, name));
             }
-
-            const assets = htmlPluginData.assets as { js: string[] };
+            const assets = htmlPluginData.assets;
             assets.js = jsNames.concat(assets.js);
             cb(null, htmlPluginData);
         };
@@ -112,7 +88,6 @@ export class DllLinkWebpackPlugin {
             );
         }
     }
-
     addAssets(compilation, cb) {
         this.cacheController.getCacheJSNames().map(name => {
             const source = fs
@@ -123,10 +98,8 @@ export class DllLinkWebpackPlugin {
                 size: () => source.length
             };
         });
-
         return cb();
     }
-
     async check(compilation, cb) {
         if (!this.hasCompile) {
             this.hasCompile = true;
@@ -134,7 +107,6 @@ export class DllLinkWebpackPlugin {
                 console.log();
                 console.log(chalk.cyan("[dll-link-plugin]: Rebuilding dll."));
                 console.log();
-
                 let assets = [];
                 try {
                     assets = await this.bundleController.webpackBuild();
@@ -143,24 +115,19 @@ export class DllLinkWebpackPlugin {
                 }
                 this.cacheController.updateJSNamesCache(assets);
             }
-
             // const { htmlMode, assetsMode } = this.options;
             // if (!htmlMode && !assetsMode) {
             //     this.bundleController.copyAllFiles();
             // }
-
             this.cacheController.writeCache();
         }
         return cb();
     }
-
     updateNames(compilation, cb) {
         const ver = this.cacheController.getCacheVersion();
-
         let entryChunks = {};
-
         // change related chunks name
-        const chunks = compilation.chunks as any[];
+        const chunks = compilation.chunks;
         for (let i = 0; i < chunks.length; i++) {
             const chunk = chunks[i];
             if (
@@ -173,7 +140,6 @@ export class DllLinkWebpackPlugin {
                 });
             }
         }
-
         // change assets name
         const newAssets = {};
         Object.keys(compilation.assets).forEach(k => {
@@ -184,11 +150,9 @@ export class DllLinkWebpackPlugin {
             newAssets[newKey] = compilation.assets[k];
         });
         compilation.assets = newAssets;
-
         return cb();
     }
-
-    attachCompiler(compiler, eventName: string, isAsync: boolean, func) {
+    attachCompiler(compiler, eventName, isAsync, func) {
         if ("hooks" in compiler) {
             // webpack 4
             eventName = trainCaseToCamelCase(eventName);
@@ -203,7 +167,6 @@ export class DllLinkWebpackPlugin {
             compiler.plugin(eventName, func);
         }
     }
-
     apply(compiler) {
         const { htmlMode, assetsMode, appendVersion } = this.options;
         this.attachCompiler(compiler, "before-compile", true, this.check);
@@ -216,17 +179,14 @@ export class DllLinkWebpackPlugin {
                 this.hookIntoHTML
             );
         }
-
         if (appendVersion) {
             this.attachCompiler(compiler, "emit", true, this.updateNames);
         }
-
         if (htmlMode || assetsMode) {
             this.attachCompiler(compiler, "emit", true, this.addAssets);
         }
-
         this.bundleController.applyDllReferencePlugins(compiler);
     }
 }
-
+exports.DllLinkWebpackPlugin = DllLinkWebpackPlugin;
 module.exports = DllLinkWebpackPlugin;
