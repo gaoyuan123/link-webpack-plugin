@@ -1,5 +1,4 @@
 import * as path from "path";
-import * as _ from "lodash";
 import * as md5 from "md5";
 import * as fs from "fs-extra";
 import * as webpack from "webpack";
@@ -7,16 +6,9 @@ import * as chalk from "chalk";
 import { CacheController } from "./CacheController";
 import { BundleController } from "./BundleController";
 
-const cacheDir = path.resolve(".dll-link-plugin");
+// const cacheDir = path.resolve(".dll-link-plugin");
 const MANIFEST_FILE = "manifest.json";
 const pluginName = "DllLinkWebpackPlugin";
-
-export interface Output {
-    jsNames: string[];
-    jsPath: string;
-    jsonNames: string[];
-    jsonPath: string;
-}
 
 export interface DllLinkWebpackPluginOptions {
     config: webpack.Configuration;
@@ -57,8 +49,7 @@ export class DllLinkWebpackPlugin {
     cacheController: CacheController;
     bundleController: BundleController;
     hasCompile: boolean;
-    cacheJSPath: string;
-    cacheJSONPath: string;
+    outputPath: string;
     options: DllLinkWebpackPluginOptions;
 
     constructor(options: DllLinkWebpackPluginOptions) {
@@ -68,31 +59,20 @@ export class DllLinkWebpackPlugin {
         this.updateNames = this.updateNames.bind(this);
 
         this.options = options;
-
-        const { config, manifestNames } = this.options;
-        if (manifestNames && !_.isArray(manifestNames)) {
-            throw new Error("manifest names must be an array.");
-        }
+        const { config } = this.options;
+        this.outputPath = config.output.path;
 
         const { entry } = config;
 
-        const configIndex = md5Slice(JSON.stringify(config));
-        this.cacheJSPath = `${cacheDir}/${configIndex}/js`;
-        this.cacheJSONPath = `${cacheDir}/${configIndex}/json`;
+        const configIndex = config["name"] || md5Slice(JSON.stringify(config));
 
         this.cacheController = new CacheController({
             configIndex,
             entry,
-            manifestFile: `${cacheDir}/${MANIFEST_FILE}`
+            manifestFile: `${this.outputPath}/${MANIFEST_FILE}`
         });
         this.bundleController = new BundleController({
-            webpackConfig: config,
-            cacheConfig: {
-                cacheJSNames: this.cacheController.getCacheJSNames(),
-                cacheJSPath: this.cacheJSPath,
-                cacheJSONPath: this.cacheJSONPath
-            },
-            manifestNames
+            webpackConfig: config
         });
         this.hasCompile = false;
     }
@@ -136,7 +116,7 @@ export class DllLinkWebpackPlugin {
     addAssets(compilation, cb) {
         this.cacheController.getCacheJSNames().map(name => {
             const source = fs
-                .readFileSync(`${this.cacheJSPath}/${name}`)
+                .readFileSync(`${this.outputPath}/${name}`)
                 .toString();
             compilation.assets[name] = {
                 source: () => source,
@@ -164,10 +144,10 @@ export class DllLinkWebpackPlugin {
                 this.cacheController.updateJSNamesCache(assets);
             }
 
-            const { htmlMode, assetsMode } = this.options;
-            if (!htmlMode && !assetsMode) {
-                this.bundleController.copyAllFiles();
-            }
+            // const { htmlMode, assetsMode } = this.options;
+            // if (!htmlMode && !assetsMode) {
+            //     this.bundleController.copyAllFiles();
+            // }
 
             this.cacheController.writeCache();
         }

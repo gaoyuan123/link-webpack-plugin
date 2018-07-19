@@ -36,26 +36,34 @@ export function getDependencyFromYarn(entry: any): PackageDependency | null {
         return null;
     }
 
-    entryList = entryList
-        .map(item => {
-            const version = packageJson.dependencies[item];
-            return version ? `${item}@${version}` : "";
-        })
-        .filter(item => !!item);
-    const content = fs.readFileSync("yarn.lock").toString();
-    const yarnInfo = yarnParser.parse(content, "yarn.lock");
+    let dependency;
+    let content;
+    try {
+        content = fs.readFileSync("package-lock.json").toString();
+        dependency = JSON.parse(content).dependencies;
+        entryList = entryList.filter(item => !!item);
+    } catch (e) {
+        content = fs.readFileSync("yarn.lock").toString();
+        dependency = yarnParser.parse(content, "yarn.lock");
+        entryList = entryList
+            .map(item => {
+                const version = packageJson.dependencies[item];
+                return version ? `${item}@${version}` : "";
+            })
+            .filter(item => !!item);
+    }
 
     function findDependency(entryList: string[]): PackageDependency {
         let m: PackageDependency = {};
         entryList.map(k => {
-            const info = yarnInfo[k];
+            const info = dependency[k] || {};
             let item: YarnDependency = {
                 version: info.version
             };
             if (info.dependencies) {
                 item.dependencies = findDependency(
                     Object.keys(info.dependencies).map(
-                        k => `${k}@${info.dependencies[k]}`
+                        k => `${k}@${info.dependencies[k].version}`
                     )
                 );
             }
