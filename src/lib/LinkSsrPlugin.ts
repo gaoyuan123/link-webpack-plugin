@@ -21,7 +21,7 @@ export default class LinkSsrPlugin {
             const dllFiles = Object.keys(dllManifest).map(entryName => {
                 return dllManifest[entryName].output;
             })
-            const {manifestJs,...otherJs} = source.initial;
+            const [manifestJs,...otherJs] = source.initial;
             source.initial = [manifestJs].concat(dllFiles || []).concat(otherJs);
 
             source = JSON.stringify(source);
