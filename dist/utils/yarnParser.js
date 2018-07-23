@@ -39,7 +39,8 @@ function* tokenise(input) {
             line++;
             col = 0;
             yield buildToken(TOKEN_TYPES.newline);
-        } else if (input[0] === "#") {
+        }
+        else if (input[0] === "#") {
             chop++;
             let val = "";
             while (input[chop] !== "\n") {
@@ -47,7 +48,8 @@ function* tokenise(input) {
                 chop++;
             }
             yield buildToken(TOKEN_TYPES.comment, val);
-        } else if (input[0] === " ") {
+        }
+        else if (input[0] === " ") {
             if (lastNewline) {
                 let indent = "";
                 for (let i = 0; input[i] === " "; i++) {
@@ -55,21 +57,23 @@ function* tokenise(input) {
                 }
                 if (indent.length % 2) {
                     throw new TypeError("Invalid number of spaces");
-                } else {
+                }
+                else {
                     chop = indent.length;
                     yield buildToken(TOKEN_TYPES.indent, indent.length / 2);
                 }
-            } else {
+            }
+            else {
                 chop++;
             }
-        } else if (input[0] === '"') {
+        }
+        else if (input[0] === '"') {
             let val = "";
-            for (let i = 0; ; i++) {
+            for (let i = 0;; i++) {
                 const currentChar = input[i];
                 val += currentChar;
                 if (i > 0 && currentChar === '"') {
-                    const isEscaped =
-                        input[i - 1] === "\\" && input[i - 2] !== "\\";
+                    const isEscaped = input[i - 1] === "\\" && input[i - 2] !== "\\";
                     if (!isEscaped) {
                         break;
                     }
@@ -78,50 +82,58 @@ function* tokenise(input) {
             chop = val.length;
             try {
                 yield buildToken(TOKEN_TYPES.string, JSON.parse(val));
-            } catch (err) {
+            }
+            catch (err) {
                 if (err instanceof SyntaxError) {
                     yield buildToken(TOKEN_TYPES.invalid);
-                } else {
+                }
+                else {
                     throw err;
                 }
             }
-        } else if (/^[0-9]/.test(input)) {
+        }
+        else if (/^[0-9]/.test(input)) {
             let val = "";
             for (let i = 0; /^[0-9]$/.test(input[i]); i++) {
                 val += input[i];
             }
             chop = val.length;
             yield buildToken(TOKEN_TYPES.number, +val);
-        } else if (/^true/.test(input)) {
+        }
+        else if (/^true/.test(input)) {
             yield buildToken(TOKEN_TYPES.boolean, true);
             chop = 4;
-        } else if (/^false/.test(input)) {
+        }
+        else if (/^false/.test(input)) {
             yield buildToken(TOKEN_TYPES.boolean, false);
             chop = 5;
-        } else if (input[0] === ":") {
+        }
+        else if (input[0] === ":") {
             yield buildToken(TOKEN_TYPES.colon);
             chop++;
-        } else if (input[0] === ",") {
+        }
+        else if (input[0] === ",") {
             yield buildToken(TOKEN_TYPES.comma);
             chop++;
-        } else if (/^[a-zA-Z\/-]/g.test(input)) {
+        }
+        else if (/^[a-zA-Z\/-]/g.test(input)) {
             let name = "";
             for (let i = 0; i < input.length; i++) {
                 const char = input[i];
-                if (
-                    char === ":" ||
+                if (char === ":" ||
                     char === " " ||
                     char === "\n" ||
-                    char === ","
-                ) {
+                    char === ",") {
                     break;
-                } else {
+                }
+                else {
                     name += char;
                 }
             }
             chop = name.length;
             yield buildToken(TOKEN_TYPES.string, name);
-        } else {
+        }
+        else {
             yield buildToken(TOKEN_TYPES.invalid);
         }
         if (!chop) {
@@ -142,10 +154,7 @@ class Parser {
     }
     onComment(token) {
         const value = token.value;
-        invariant(
-            typeof value === "string",
-            "expected token value to be a string"
-        );
+        invariant(typeof value === "string", "expected token value to be a string");
         const comment = value.trim();
         const versionMatch = comment.match(VERSION_REGEX);
         if (versionMatch) {
@@ -163,17 +172,17 @@ class Parser {
         const { done, value } = item;
         if (done || !value) {
             throw new Error("No more tokens");
-        } else if (value.type === TOKEN_TYPES.comment) {
+        }
+        else if (value.type === TOKEN_TYPES.comment) {
             this.onComment(value);
             return this.next();
-        } else {
+        }
+        else {
             return (this.token = value);
         }
     }
     unexpected(msg = "Unexpected token") {
-        throw new SyntaxError(
-            `${msg} ${this.token.line}:${this.token.col} in ${this.fileLoc}`
-        );
+        throw new SyntaxError(`${msg} ${this.token.line}:${this.token.col} in ${this.fileLoc}`);
     }
     parse(indent = 0) {
         const obj = {};
@@ -192,19 +201,24 @@ class Parser {
                 if (nextToken.value === indent) {
                     // all is good, the indent is on our level
                     this.next();
-                } else {
+                }
+                else {
                     // the indentation is less than our level
                     break;
                 }
-            } else if (propToken.type === TOKEN_TYPES.indent) {
+            }
+            else if (propToken.type === TOKEN_TYPES.indent) {
                 if (propToken.value === indent) {
                     this.next();
-                } else {
+                }
+                else {
                     break;
                 }
-            } else if (propToken.type === TOKEN_TYPES.eof) {
+            }
+            else if (propToken.type === TOKEN_TYPES.eof) {
                 break;
-            } else if (propToken.type === TOKEN_TYPES.string) {
+            }
+            else if (propToken.type === TOKEN_TYPES.string) {
                 // property key
                 const key = propToken.value;
                 invariant(key, "Expected a key");
@@ -234,16 +248,19 @@ class Parser {
                     if (indent && this.token.type !== TOKEN_TYPES.indent) {
                         break;
                     }
-                } else if (isValidPropValueToken(valToken)) {
+                }
+                else if (isValidPropValueToken(valToken)) {
                     // plain value
                     for (const key of keys) {
                         obj[key] = valToken.value;
                     }
                     this.next();
-                } else {
+                }
+                else {
                     this.unexpected("Invalid value type");
                 }
-            } else {
+            }
+            else {
                 this.unexpected("Unknown token");
             }
         }

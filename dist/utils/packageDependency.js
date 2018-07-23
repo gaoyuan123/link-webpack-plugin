@@ -7,15 +7,18 @@ const NODE_MODULES_PATH = path.resolve("./node_modules");
 function convertEntryToList(entry) {
     if (typeof entry === "string") {
         return [entry];
-    } else if (Array.isArray(entry)) {
+    }
+    else if (Array.isArray(entry)) {
         return entry;
-    } else if (typeof entry === "object") {
+    }
+    else if (typeof entry === "object") {
         let list = [];
         Object.keys(entry).forEach(k => {
             list = list.concat(entry[k]);
         });
         return list;
-    } else {
+    }
+    else {
         throw `Incorrect entry type.`;
     }
 }
@@ -30,15 +33,15 @@ function getDependencyFromYarn(entry) {
     try {
         content = fs.readFileSync("package-lock.json").toString();
         dependency = JSON.parse(content).dependencies;
-        entryList = entryList.filter(item => !!item);
-    } catch (e) {
+    }
+    catch (e) {
         content = fs.readFileSync("yarn.lock").toString();
         dependency = yarnParser.parse(content, "yarn.lock");
         entryList = entryList
             .map(item => {
-                const version = packageJson.dependencies[item];
-                return version ? `${item}@${version}` : "";
-            })
+            const version = packageJson.dependencies[item];
+            return version ? `${item}@${version}` : "";
+        })
             .filter(item => !!item);
     }
     function findDependency(entryList) {
@@ -49,11 +52,7 @@ function getDependencyFromYarn(entry) {
                 version: info.version
             };
             if (info.dependencies) {
-                item.dependencies = findDependency(
-                    Object.keys(info.dependencies).map(
-                        k => `${k}@${info.dependencies[k].version}`
-                    )
-                );
+                item.dependencies = findDependency(Object.keys(info.dependencies).map(k => `${k}@${info.dependencies[k].version}`));
             }
             m[k] = item;
         });
@@ -62,13 +61,13 @@ function getDependencyFromYarn(entry) {
     return findDependency(entryList);
 }
 exports.getDependencyFromYarn = getDependencyFromYarn;
-function getPKGVersion(yarnEntryName) {
+function getPKGInfo(yarnEntryName) {
     const atIndex = yarnEntryName.lastIndexOf("@");
     if (atIndex > 0) {
         yarnEntryName = yarnEntryName.substring(0, atIndex);
     }
     const pkgPath = path.join(NODE_MODULES_PATH, yarnEntryName, "package.json");
     const pkg = require(pkgPath);
-    return pkg.version;
+    return pkg;
 }
-exports.getPKGVersion = getPKGVersion;
+exports.getPKGInfo = getPKGInfo;

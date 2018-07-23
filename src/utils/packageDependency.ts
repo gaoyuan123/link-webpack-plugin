@@ -1,6 +1,7 @@
 import * as yarnParser from "./yarnParser";
 import * as fs from "fs";
 import * as path from "path";
+import { DllEntry } from "./CacheController";
 
 const NODE_MODULES_PATH = path.resolve("./node_modules");
 
@@ -13,7 +14,7 @@ export interface PackageDependency {
     [index: string]: YarnDependency;
 }
 
-function convertEntryToList(entry: any): string[] {
+function convertEntryToList(entry: DllEntry): string[] {
     if (typeof entry === "string") {
         return [entry];
     } else if (Array.isArray(entry)) {
@@ -29,7 +30,7 @@ function convertEntryToList(entry: any): string[] {
     }
 }
 
-export function getDependencyFromYarn(entry: any): PackageDependency | null {
+export function getDependencyFromYarn(entry: DllEntry): PackageDependency | null {
     let entryList = convertEntryToList(entry);
     const packageJson = JSON.parse(fs.readFileSync("package.json").toString());
     if (!packageJson.dependencies) {
@@ -41,7 +42,6 @@ export function getDependencyFromYarn(entry: any): PackageDependency | null {
     try {
         content = fs.readFileSync("package-lock.json").toString();
         dependency = JSON.parse(content).dependencies;
-        entryList = entryList.filter(item => !!item);
     } catch (e) {
         content = fs.readFileSync("yarn.lock").toString();
         dependency = yarnParser.parse(content, "yarn.lock");
@@ -76,7 +76,7 @@ export function getDependencyFromYarn(entry: any): PackageDependency | null {
     return findDependency(entryList);
 }
 
-export function getPKGVersion(yarnEntryName: string) {
+export function getPKGInfo(yarnEntryName: string) {
     const atIndex = yarnEntryName.lastIndexOf("@");
     if (atIndex > 0) {
         yarnEntryName = yarnEntryName.substring(0, atIndex);
@@ -84,5 +84,5 @@ export function getPKGVersion(yarnEntryName: string) {
     const pkgPath = path.join(NODE_MODULES_PATH, yarnEntryName, "package.json");
     const pkg = require(pkgPath);
 
-    return pkg.version;
+    return pkg;
 }
