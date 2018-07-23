@@ -1,4 +1,13 @@
 "use strict";
+var __rest = (this && this.__rest) || function (s, e) {
+    var t = {};
+    for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p) && e.indexOf(p) < 0)
+        t[p] = s[p];
+    if (s != null && typeof Object.getOwnPropertySymbols === "function")
+        for (var i = 0, p = Object.getOwnPropertySymbols(s); i < p.length; i++) if (e.indexOf(p[i]) < 0)
+            t[p[i]] = s[p[i]];
+    return t;
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 class LinkSsrPlugin {
     constructor(options) {
@@ -14,7 +23,8 @@ class LinkSsrPlugin {
             const dllFiles = Object.keys(dllManifest).map(entryName => {
                 return dllManifest[entryName].output;
             });
-            source.initial = (dllFiles || []).concat(source.initial || []);
+            const _a = source.initial, { manifestJs } = _a, otherJs = __rest(_a, ["manifestJs"]);
+            source.initial = [manifestJs].concat(dllFiles || []).concat(otherJs);
             source = JSON.stringify(source);
             compilation.assets['vue-ssr-client-manifest.json'] = {
                 source: function () { return source; },

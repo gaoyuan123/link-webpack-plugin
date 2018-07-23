@@ -21,7 +21,8 @@ export default class LinkSsrPlugin {
             const dllFiles = Object.keys(dllManifest).map(entryName => {
                 return dllManifest[entryName].output;
             })
-            source.initial = (dllFiles || []).concat(source.initial || [])
+            const {manifestJs,...otherJs} = source.initial;
+            source.initial = [manifestJs].concat(dllFiles || []).concat(otherJs);
 
             source = JSON.stringify(source);
             compilation.assets['vue-ssr-client-manifest.json'] = {
