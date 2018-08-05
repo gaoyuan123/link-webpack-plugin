@@ -9,7 +9,7 @@ class DllLinkWebpackPlugin extends LinkWebpackPlugin_1.default {
         options.filename = options.filename || MANIFEST_FILE;
         super(options);
         this.options = options;
-        const { entry } = this.options.config;
+        const entry = this.entry = this.options.config.entry;
         let updateEntry = {};
         Object.keys(entry).forEach(name => {
             if (this.cacheController.checkCache(name, entry[name])) {
@@ -17,12 +17,12 @@ class DllLinkWebpackPlugin extends LinkWebpackPlugin_1.default {
             }
         });
         this.options.config.entry = updateEntry;
-        this.shouldUpdate = Object.keys(updateEntry).length > 0;
     }
     apply(compiler) {
         super.apply(compiler);
         new DllRefController_1.DllRefController({
-            webpackConfig: this.options.config
+            webpackConfig: this.options.config,
+            entry: this.entry
         }).applyDllReferencePlugins(compiler);
     }
 }

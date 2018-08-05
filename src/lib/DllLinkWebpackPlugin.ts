@@ -18,13 +18,14 @@ export default class DllLinkWebpackPlugin extends LinkWebpackPlugin{
     dllRefController: DllRefController;
     options: DllLinkWebpackPluginOptions;
     shouldUpdate: boolean;
-
+    entry: {}
+    
     constructor(options: DllLinkWebpackPluginOptions) {
         options.filename = options.filename || MANIFEST_FILE;
         super(options);
         this.options = options;
 
-        const { entry } = this.options.config;
+        const entry = this.entry = this.options.config.entry;
 
         let updateEntry = {};
         Object.keys(entry).forEach(name => {
@@ -33,13 +34,13 @@ export default class DllLinkWebpackPlugin extends LinkWebpackPlugin{
             }
         })
         this.options.config.entry = updateEntry;
-        this.shouldUpdate = Object.keys(updateEntry).length > 0;
     }
 
     apply(compiler) {
         super.apply(compiler);
         new DllRefController({
-            webpackConfig: this.options.config
+            webpackConfig: this.options.config,
+            entry: this.entry
         }).applyDllReferencePlugins(compiler);
     }
 }

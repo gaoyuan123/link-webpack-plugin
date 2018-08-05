@@ -13,6 +13,7 @@ export default class DllLinkWebpackPlugin extends LinkWebpackPlugin {
     dllRefController: DllRefController;
     options: DllLinkWebpackPluginOptions;
     shouldUpdate: boolean;
+    entry: {};
     constructor(options: DllLinkWebpackPluginOptions);
     apply(compiler: any): void;
 }

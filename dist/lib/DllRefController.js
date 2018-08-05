@@ -12,12 +12,12 @@ class DllRefController {
             throw new Error("Your webpack dll config miss DllPlugin.");
         }
         const dllOptions = dllPlugin.options;
-        this.initDllReferencePlugins(dllOptions);
+        this.initDllReferencePlugins(this.options.entry, dllOptions);
         // this.pluginStartTime = Date.now();
     }
-    initDllReferencePlugins(dllOptions) {
+    initDllReferencePlugins(entry, dllOptions) {
         const dllJsonFullPath = dllOptions.path;
-        const referenceNames = Object.keys(this.options.webpackConfig.entry).map(entryName => {
+        const referenceNames = Object.keys(entry).map(entryName => {
             return dllJsonFullPath.replace("[name]", entryName);
         });
         let referenceConf = referenceNames.map(name => ({

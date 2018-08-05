@@ -5,6 +5,7 @@ import * as webpack from "webpack";
 
 export interface DllRefOptions {
     webpackConfig: webpack.Configuration;
+    entry: {}
 }
 
 export class DllRefController {
@@ -13,7 +14,6 @@ export class DllRefController {
     private options: DllRefOptions;
     constructor(options: DllRefOptions) {
         this.options = options;
-
         const { plugins } = options.webpackConfig;
 
         const dllPlugin: any = (plugins || []).find(item => {
@@ -25,15 +25,15 @@ export class DllRefController {
 
         const dllOptions: webpack.DllPlugin.Options = dllPlugin.options;
 
-        this.initDllReferencePlugins(dllOptions);
+        this.initDllReferencePlugins(this.options.entry,dllOptions);
 
         // this.pluginStartTime = Date.now();
     }
 
-    private initDllReferencePlugins(dllOptions: webpack.DllPlugin.Options) {
+    private initDllReferencePlugins(entry,dllOptions: webpack.DllPlugin.Options) {
         const dllJsonFullPath = dllOptions.path;
 
-        const referenceNames = Object.keys(this.options.webpackConfig.entry).map(entryName => {
+        const referenceNames = Object.keys(entry).map(entryName => {
             return dllJsonFullPath.replace("[name]", entryName);
         });
         let referenceConf: webpack.DllReferencePlugin.Options[] = referenceNames.map(
