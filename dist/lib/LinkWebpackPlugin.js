@@ -33,7 +33,7 @@ class LinkWebpackPlugin {
     }
     hookIntoHTML(compilation) {
         const hookFunction = (htmlPluginData, cb) => {
-            const { publicPath } = this.options.config.output || compilation.options.output.publicPath;
+            const publicPath = this.options.config.output.publicPath || compilation.options.output.publicPath;
             let js = this.cacheController.getCacheJSNames()
                 .filter(item => {
                 // only include js files(there may be map files in it)
