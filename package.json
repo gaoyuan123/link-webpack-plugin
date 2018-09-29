@@ -1,6 +1,6 @@
 {
   "name": "link-webpack-plugin",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "a webpack plugin link to other webpack build",
   "main": "dist/index.js",
   "typings": "index.d.ts",
