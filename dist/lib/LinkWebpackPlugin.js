@@ -1,7 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const fs = require("fs-extra");
-const path = require("path");
 const chalk = require("chalk");
 const webpack = require("webpack");
 const CacheController_1 = require("../utils/CacheController");
@@ -44,7 +43,7 @@ class LinkWebpackPlugin {
                 return false;
             });
             if (publicPath) {
-                js = js.map(name => path.join(publicPath, name));
+                js = js.map(name => publicPath + name);
             }
             const assets = htmlPluginData.assets;
             assets.js = js.concat(assets.js);

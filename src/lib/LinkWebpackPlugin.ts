@@ -1,5 +1,4 @@
 import * as fs from "fs-extra";
-import * as path from "path";
 import * as chalk from "chalk";
 import * as webpack from "webpack";
 import { CacheController } from "../utils/CacheController";
@@ -61,7 +60,7 @@ export default class LinkWebpackPlugin {
                     return false;
                 });
             if (publicPath) {
-                js = js.map(name => path.join(publicPath, name));
+                js = js.map(name => publicPath + name);
             }
 
             const assets = htmlPluginData.assets as { js: string[] };
