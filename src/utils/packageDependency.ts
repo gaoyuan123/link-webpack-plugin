@@ -3,7 +3,8 @@ import * as fs from "fs";
 import * as path from "path";
 import { DllEntry } from "./CacheController";
 
-const NODE_MODULES_PATH = path.resolve("./node_modules");
+const PACKAGE_PATH = path.join(__dirname,"../../../../")
+const NODE_MODULES_PATH = path.join(PACKAGE_PATH,"./node_modules");
 
 export interface YarnDependency {
     version: string;
@@ -32,7 +33,7 @@ function convertEntryToList(entry: DllEntry): string[] {
 
 export function getDependencyFromYarn(entry: DllEntry): PackageDependency | null {
     let entryList = convertEntryToList(entry);
-    const packageJson = JSON.parse(fs.readFileSync("package.json").toString());
+    const packageJson = JSON.parse(fs.readFileSync(path.join(PACKAGE_PATH,"package.json")).toString());
     if (!packageJson.dependencies) {
         return null;
     }
@@ -40,11 +41,11 @@ export function getDependencyFromYarn(entry: DllEntry): PackageDependency | null
     let dependency;
     let content;
     try {
-        content = fs.readFileSync("package-lock.json").toString();
+        content = fs.readFileSync(path.join(PACKAGE_PATH,"package-lock.json")).toString();
         dependency = JSON.parse(content).dependencies;
     } catch (e) {
-        content = fs.readFileSync("yarn.lock").toString();
-        dependency = yarnParser.parse(content, "yarn.lock");
+        content = fs.readFileSync(path.join(PACKAGE_PATH,"yarn.lock")).toString();
+        dependency = yarnParser.parse(content, path.join(PACKAGE_PATH,"yarn.lock"));
         entryList = entryList
             .map(item => {
                 const version = packageJson.dependencies[item];
